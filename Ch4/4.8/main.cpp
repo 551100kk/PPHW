@@ -8,7 +8,9 @@ using namespace std;
 #define BLOCK_SIZE(id,p,n) (BLOCK_HIGH(id,p,n)-BLOCK_LOW(id,p,n)+1)
 #define BLOCK_OWNER(j,p,n) (((p)*((j)+1)-1)/(n))
 
-int calc(int n, int p, int id) {
+const int n = 10000000;
+
+int calc(int p, int id) {
     int start = BLOCK_LOW(id, p, n) + 1;
     int end = BLOCK_HIGH(id, p, n) + 1;
 
@@ -20,7 +22,7 @@ int calc(int n, int p, int id) {
         for (int j = i + i; j <= pn; j += i) {
             is[j] = 1;
         }
-        for (int j = min(i * i, (start + i - 1) / i * i); j <= end + 2; j += i) {
+        for (int j = max(i * i, (start + i - 1) / i * i); j <= end + 2; j += i) {
             if (i == j) continue;
             notPrime[j - start] = 1;
         }
@@ -37,7 +39,6 @@ int calc(int n, int p, int id) {
 int main(int argc, char** argv) {
     int id;
     int p;
-    int n = 10000000;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
@@ -47,7 +48,7 @@ int main(int argc, char** argv) {
     double time = -MPI_Wtime();
     double maxTime;
     // Do something.
-    int cnt = calc(n, p, id);
+    int cnt = calc(p, id);
     int totalCnt;
     MPI_Reduce(&cnt, &totalCnt, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     time += MPI_Wtime();
