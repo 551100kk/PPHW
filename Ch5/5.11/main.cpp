@@ -16,7 +16,7 @@ int *calc(int p, int id) {
     int start = BLOCK_LOW(id, p, n) + 1;
     int end = BLOCK_HIGH(id, p, n) + 1;
 
-    int *val = new int[d];
+    int *val = new int[d]();
     for (int i = start; i <= end; i++) {
         long long now = 1;
         for (int j = 0; j < d && now; j++) {
@@ -29,7 +29,6 @@ int *calc(int p, int id) {
             val[j] %= base;
         }
     }
-    
     return val;
 }
 
@@ -48,7 +47,7 @@ void solve(int p, int id) {
     MPI_Op_create((MPI_User_function *) addarr, 1, &arrsum);
 
     int *val = calc(p, id);
-    int *sum = new int[d];
+    int *sum = new int[d]();
     MPI_Reduce(val, sum, d, MPI_INT, arrsum, 0, MPI_COMM_WORLD);
 
     if (id == 0) {
