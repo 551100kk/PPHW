@@ -1,4 +1,6 @@
 #include <bits/stdc++.h>
+#include <unistd.h>
+#include <sys/stat.h>
 using namespace std;
 
 #include "mpi.h"
@@ -50,7 +52,7 @@ void update(int id, int p, char **board, char **newBoard, int n, int m, int iter
 
 void solve(int p, int id, char **argv) {
     int n, m;
-    char *boardMemory, *nextBoardMemory;
+    char *boardMemory, *newBoardMemory;
     char **board, **newBoard;
     int *blockSize;
     int *displs;
@@ -61,6 +63,7 @@ void solve(int p, int id, char **argv) {
     // read from the file
     FILE *file;
     if (id == 0) {
+        mkdir("output", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         file = fopen(argv[1], "r");
         assert(fscanf(file, "%d%d", &n, &m) == 2);
     }
@@ -68,12 +71,12 @@ void solve(int p, int id, char **argv) {
     MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     boardMemory = new char[n * m + 5];
-    nextBoardMemory = new char[n * m + 5];
+    newBoardMemory = new char[n * m + 5];
     board = new char*[n];
     newBoard = new char*[n];
     for (int i = 0; i < n; i++) {
         board[i] = &boardMemory[i * m];
-        newBoard[i] = &nextBoardMemory[i * m];
+        newBoard[i] = &newBoardMemory[i * m];
     }
 
     if (id == 0) {
@@ -86,7 +89,7 @@ void solve(int p, int id, char **argv) {
             offset += blockSize[i];
         }
         for (int i = 0; i < n; i++) {
-            assert(fscanf(file, "%s", board[i]) == 1);
+            assert(fscanf(file, "%s", newBoard[i]) == 1);
         }
         fclose(file);
     }
@@ -94,20 +97,26 @@ void solve(int p, int id, char **argv) {
     // start iter
     int start = BLOCK_LOW(id, p, n);
     int end = BLOCK_HIGH(id, p, n);
-    MPI_Scatterv(boardMemory, blockSize, displs, MPI_CHAR, board[start], (end - start + 1) * m, MPI_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(newBoardMemory, blockSize, displs, MPI_CHAR, board[start], (end - start + 1) * m, MPI_CHAR, 0, MPI_COMM_WORLD);
     for (int T = 0; T < iter; T++) {
         update(id, p, board, newBoard, n, m, iter);   
+        if ((T + 1) % outputIter == 0) {
+            MPI_Gatherv(board[start], (end - start + 1) * m, MPI_CHAR, newBoardMemory, blockSize, displs, MPI_CHAR, 0, MPI_COMM_WORLD);        
+            if (id == 0) {
+                char name[30];
+                sprintf(name, "output/img_%04d.txt", T);
+                file = fopen(name, "w");
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < m; j++) {
+                        fprintf(file, "%c", newBoard[i][j]);
+                    }
+                    fprintf(file, "\n");
+                }
+                fclose(file);    
+            }
+            
+        }
     }
-    MPI_Gatherv(board[start], (end - start + 1) * m, MPI_CHAR, boardMemory, blockSize, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-    // if (id == 0) {
-    //     for (int i = 0; i < n; i++) {
-    //         for (int j = 0; j < m; j++) {
-    //             printf("%c", board[i][j]);
-    //         }
-    //         puts("");
-    //     }
-    // }
 }
 
 int main(int argc, char** argv) {
