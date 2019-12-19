@@ -70,18 +70,18 @@ void solve(int p, int id, char **argv) {
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    boardMemory = new char[n * m + 5];
-    newBoardMemory = new char[n * m + 5];
-    board = new char*[n];
-    newBoard = new char*[n];
+    boardMemory = (char *) malloc(n * m + 5);
+    newBoardMemory = (char *) malloc(n * m + 5);
+    board = (char **) malloc(n * sizeof(char *));
+    newBoard = (char **) malloc(n * sizeof(char *));
     for (int i = 0; i < n; i++) {
         board[i] = &boardMemory[i * m];
         newBoard[i] = &newBoardMemory[i * m];
     }
 
     if (id == 0) {
-        blockSize = new int[p];
-        displs = new int[p];
+        blockSize = (int *) malloc(p * 4);
+        displs = (int *) malloc(p * 4);
         int offset = 0;
         for (int i = 0; i < p ; i++) {
             displs[i] = offset;
