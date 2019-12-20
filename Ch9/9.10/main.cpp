@@ -8,32 +8,31 @@ using namespace std;
 #define BLOCK_SIZE(id,p,n) (BLOCK_HIGH(id,p,n)-BLOCK_LOW(id,p,n)+1)
 #define BLOCK_OWNER(j,p,n) (((p)*((j)+1)-1)/(n))
 
-const int n = 40;
+const int n = 50;
 
 int check(long long val, long long l, long long r) {
-    for (long long i = l; i <= r; i++) {
+    int isPrime = 1;
+    for (long long i = l; i <= r && i < val; i++) {
         if (val % i == 0) {
-            return 0;
+            isPrime = 0;
         }
     }
-    return 1; 
+    return isPrime; 
 }
 
-void solve(int p, int id) {
+void solve(long long p, long long id) {
     long long base = 2;
     for (int i = 0; i < n; i++) {
         base *= 2;
         long long lbase = base - 1;
-        long long l = 2;
-        long long r = sqrt((long double) lbase) + 1;
-        r = min(r, lbase - 1);
-        long long newl = BLOCK_LOW((long long) id, (long long) p, r - l + 1) + l;
-        long long newr = BLOCK_HIGH((long long) id, (long long) p, r - l + 1) + l;
-        // if (id == 1) printf("%lld, %lld\n", newl, newr);
-        int res = check(lbase, newl, newr);
-        int finalRes;
-        MPI_Reduce(&res, &finalRes, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-        if (id == 0 && finalRes) {
+        long long block = sqrt(lbase);
+        long long l = BLOCK_LOW(id, p, block) + 2;
+        long long r = BLOCK_HIGH(id, p, block) + 2;
+        int isPrime = check(lbase, l, r);
+        int globalIsPrime;
+        MPI_Reduce(&isPrime, &globalIsPrime, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+        if (id == 0 && globalIsPrime) {
             cout << lbase * base / 2 << endl;
         }
     }
