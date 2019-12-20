@@ -14,25 +14,20 @@ const double d = 0.3;
 
 void solve(long long p, long long id) {
     double round = n / p;
-    double volumn = 0;
-    
-    random_device rd;
-    mt19937 gen = std::mt19937(rd());
-    uniform_real_distribution<> dis(0, 2);
-    auto randfun = bind(dis, gen);
+    double volume = 0;
 
+    srand(time(NULL));
     for (long long i = 0; i < round; i++) {
-        double x = randfun();
-        double y = randfun();
-        double z = randfun();
-        
+        double x = (double) rand() / RAND_MAX * s;
+        double y = (double) rand() / RAND_MAX * s;
+        double z = (double) rand() / RAND_MAX * s;
         double dist = sin(acos((x + y + z) / (sqrt(3) * sqrt(x * x + y * y + z * z)))) * sqrt(x * x + y * y + z * z);
-        if (dist > d / 2) volumn += 1;
+        if (dist > d / 2) volume += 1;
     }
 
-    volumn /= round;
+    volume /= round;
     double ans;
-    MPI_Reduce(&volumn, &ans, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&volume, &ans, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if (id == 0) {
         ans /= p;
