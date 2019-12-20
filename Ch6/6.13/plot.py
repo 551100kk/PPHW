@@ -32,4 +32,4 @@ if __name__ == '__main__':
                 img.append(pix)
         img = numpy.array(img)
         img = enlarge(img, 20)
-        save_img(img, 'output/' + file.replace('txt', 'bmp'))
+        save_img(img, 'output/' + file.replace('txt', 'png'))
